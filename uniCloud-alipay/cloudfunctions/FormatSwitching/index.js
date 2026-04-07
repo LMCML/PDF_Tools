@@ -74,9 +74,12 @@ async function switchToPDF(fileID) {
 
 // PDF转图片
 async function switchToPic(fileID) {
-	const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
-	const canvas = require('canvas')
-	pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+	const wsp = require('./lib/web-streams-polyfill')
+	globalThis.ReadableStream = wsp.ReadableStream
+	const dom = require("./lib/dommatrix/dist/dommatrix.js")
+	globalThis.DOMMatrix = dom
+	const pdfjsLib = require('./lib/pdfjs-dist/legacy/build/pdf.js')
+	const canvas = require('@napi-rs/canvas')
 	const picturesFileID = []
 	let uploadStatus
 	for (let PDFFile of fileID) {
@@ -112,8 +115,8 @@ async function switchToPic(fileID) {
 					continue
 				}
 			}
-		} catch {
-			console.log("PDF解析失败，跳过")
+		} catch(e) {
+			console.log("PDF解析失败，跳过"+e)
 			continue
 		}
 	}
