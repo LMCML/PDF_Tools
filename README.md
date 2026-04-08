@@ -12,7 +12,7 @@ pdf-lib - MIT
 Copyright (c) 2019 Andrew Dillon
 https://opensource.org/licenses/MIT
 
-pdfjs (PDF.js) - Apache 2.0
+PDF.js - Apache 2.0
 Copyright (c) Mozilla Foundation
 https://www.apache.org/licenses/LICENSE-2.0
 
