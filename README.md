@@ -1,4 +1,4 @@
-本项目使用以下内容：
+# 本项目使用以下内容：
 
 uni-app - Apache 2.0
 Copyright (c) DCloud Co., Ltd.
