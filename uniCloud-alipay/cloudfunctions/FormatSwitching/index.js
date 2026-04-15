@@ -1,13 +1,12 @@
 'use strict';
 
 // const { request } = require('http');
-const {
-	PDFDocument
-} = require('pdf-lib')
+const pdfLib = require('pdf-lib')
 
 exports.main = async (event, context) => {
 	const fileID = event.fileID
 	const api = event.api
+	// 函数将返回用于下载的云文件ID和状态字符串
 	switch (api) {
 		case 'switchToPDF':
 			return switchToPDF(fileID)
@@ -20,7 +19,7 @@ exports.main = async (event, context) => {
 
 // 图片转PDF
 async function switchToPDF(fileID) {
-	const PDFObj = await PDFDocument.create()
+	const PDFObj = await pdfLib.PDFDocument.create()
 	for (let pic of fileID) {
 		try {
 			const result = await uniCloud.downloadFile({
@@ -61,13 +60,10 @@ async function switchToPDF(fileID) {
 		})
 		uploadStatus = "success"
 	} catch {
-		uploadObj = {
-			fileID: null
-		}
 		uploadStatus = "fail"
 	}
 	return {
-		fileID: [uploadObj.fileID],
+		fileID: uploadObj.fileID,
 		status: uploadStatus
 	}
 }

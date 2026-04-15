@@ -16543,7 +16543,7 @@
 						let Canvas
 						try {
 							Canvas = require("canvas")
-						} catch (e) {
+						} catch (error) {
 							// @napi-rs/canvas
 							Canvas = require("@napi-rs/canvas")
 						}

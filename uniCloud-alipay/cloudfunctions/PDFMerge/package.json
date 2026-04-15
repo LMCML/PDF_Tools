@@ -1,0 +1,9 @@
+{
+  "name": "PDFMerge",
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  },
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}

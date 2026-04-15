@@ -1,8 +1,8 @@
 <template>
+	
 	<view class="total">
 
 		<view class="file_function">
-
 			<view class="buttons" :class="{ 'button_click': !typeSelecting }" @click="typeSelect">
 				<text class="buttons_text">载入文件</text>
 				<view class="button_mask" :style="{ visibility: showButtonMask ? 'visible' : 'hidden' }" @click.stop>
@@ -18,7 +18,6 @@
 					</view>
 				</view>
 			</view>
-
 			<view class="import_file_preview" :style="{ visibility: showIfp ? 'visible' : 'hidden' }">
 				<view class="loading_zone " v-if="showIfpLoad">
 					<view class="loading_graph"
@@ -58,12 +57,10 @@
 					</view>
 				</view>
 			</view>
-
 			<view class="buttons button_click" :style="{ visibility: showGb ? 'visible' : 'hidden' }"
 				@click="shouldDownloadLocal ? downloadToLocal(fileResultList) : shareFileToChat(fileResultList)">
 				<text class="buttons_text">导出文件</text>
 			</view>
-
 		</view>
 
 	</view>
@@ -154,7 +151,7 @@
 									try {
 										const info = await uni.getImageInfo({
 											src: pic
-										});
+										})
 										if (info.type && ['jpg', 'jpeg', 'png'].includes(info
 												.type.toLowerCase())) {
 											fileCache.value.push(pic)
@@ -258,10 +255,10 @@
 										cancelText: '否',
 										success: (res) => {
 											if (res.confirm) {
-												uni.openSetting();
+												uni.openSetting()
 											}
 										}
-									});
+									})
 								}
 							}
 						})
@@ -276,7 +273,7 @@
 									try {
 										const info = await uni.getImageInfo({
 											src: pic.path
-										});
+										})
 										if (info.type && ['jpg', 'jpeg', 'png'].includes(info
 												.type.toLowerCase())) {
 											fileCache.value.push(pic.path)
@@ -382,10 +379,10 @@
 										cancelText: '否',
 										success: (res) => {
 											if (res.confirm) {
-												uni.openSetting();
+												uni.openSetting()
 											}
 										}
-									});
+									})
 								}
 							}
 						})
@@ -438,7 +435,7 @@
 						try {
 							resultFileID = await uniCloud.callFunction({
 								name: 'FormatSwitching',
-								data: {
+								data: { 
 									fileID: cloudFileID.value,
 									api: 'switchToPic'
 								},
@@ -500,10 +497,10 @@
 							cancelText: '否',
 							success: (res) => {
 								if (res.confirm) {
-									uni.openSetting();
+									uni.openSetting()
 								}
 							}
-						});
+						})
 					}
 				}
 			})
@@ -640,6 +637,7 @@
 					continue
 				}
 			}
+			if (fileResultList.value.length === 0) return "fail"
 			return "success"
 		} catch {
 			uni.showToast({
@@ -693,19 +691,19 @@
 		margin-bottom: 10rpx;
 		background-color: #e8c8a8;
 		border: 6rpx solid #a58560;
-		box-shadow: 0 3px 0 #7a664e,
-			0 5px 0 rgba(0, 0, 0, 0.2);
+		box-shadow: 0 6rpx 0 #7a664e,
+			0 10rpx 0 rgba(0, 0, 0, 0.2);
 		position: relative;
 		transition: all linear 0.2s;
-		min-width: 200rpx;
+		width: 100%;
 		flex: 1;
 	}
 
 	.button_click:active {
 		transform: translateY(2px);
 		border: 6rpx solid #d1a879;
-		box-shadow: 0 2px 0 #9e876a,
-			0 4px 0 rgba(0, 0, 0, 0.2);
+		box-shadow: 0 4rpx 0 #9e876a,
+			0 8rpx 0 rgba(0, 0, 0, 0.2);
 		transition: transform linear 0s;
 	}
 
@@ -785,9 +783,8 @@
 	}
 
 	.loading_graph {
-		background-color: #ee5959;
-		height: 60%;
-		width: 60%;
+		height: 70%;
+		width: 70%;
 	}
 
 	.loading_graph_animation {
@@ -805,6 +802,7 @@
 	.loading_text {
 		user-select: none;
 		font-size: 24rpx;
+		font-weight: bold;
 		white-space: nowrap;
 	}
 

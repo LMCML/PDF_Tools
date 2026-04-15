@@ -1,4 +1,5 @@
 <template>
+
 	<view class="total">
 
 		<view class="option_zone">
@@ -9,41 +10,59 @@
 				<view class="buttons button_click" @click="selectSwitchingTool">
 					<text class="buttons_text">图片/PDF转换</text>
 				</view>
-<!-- 				<view class="buttons button_click">
+				<view class="buttons button_click" @click="selectCuttingTool">
 					<text class="buttons_text">PDF剪切</text>
 				</view>
-				<view class="buttons button_click">
+				<view class="buttons button_click" @click="selectMergeTool">
 					<text class="buttons_text">PDF拼接</text>
-				</view> -->
+				</view>
 			</view>
 		</view>
 
 		<view class="working_zone">
-			<FormatSwitching class="components" :style="{ visibility: switchingTool }" />
+			<FormatSwitching class="components" v-if="switchingTool" />
+			<PDFCutting class="components" v-if="cuttingTool" />
+			<PDFMerge class="components" v-if="mergeTool" />
 		</view>
 
 	</view>
+
 </template>
 
 <script setup>
 	import FormatSwitching from '@/components/FormatSwitching.vue'
+	import PDFCutting from '@/components/PDFCutting.vue'
+	import PDFMerge from '@/components/PDFMerge.vue'
 	import {
 		ref
 	} from 'vue'
-	
-	const switchingTool = ref('hidden')
-	const cuttingTool = ref('hidden')
-	const spliceTool = ref('hidden')
-	
-	function selectSwitchingTool(){
-		switchingTool.value = 'visible'
-		cuttingTool.value = 'hidden'
-		spliceTool.value = 'hidden'
-	
+
+	const switchingTool = ref(false)
+	const cuttingTool = ref(false)
+	const mergeTool = ref(false)
+
+	function selectSwitchingTool() {
+		switchingTool.value = true
+		cuttingTool.value = false
+		mergeTool.value = false
+	}
+
+	function selectCuttingTool() {
+		cuttingTool.value = true
+		switchingTool.value = false
+		mergeTool.value = false
+	}
+
+	function selectMergeTool() {
+		mergeTool.value = true
+		switchingTool.value = false
+		cuttingTool.value = false
+
+	}
+
 	// const appBaseInfo = uni.getAppBaseInfo();
 	// console.log('编译器版本 (uniCompilerVersion):', appBaseInfo.uniCompilerVersion);
 	// console.log('运行时版本 (uniRuntimeVersion):', appBaseInfo.uniRuntimeVersion);
-	}
 </script>
 
 <style scoped>
@@ -89,7 +108,7 @@
 			0 10rpx 0 rgba(0, 0, 0, 0.2);
 		position: relative;
 		transition: all linear 0.1s;
-		width: 210rpx;
+		width: 25%;
 	}
 
 	.button_click:active {

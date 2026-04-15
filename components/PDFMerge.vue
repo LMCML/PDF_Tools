@@ -6,19 +6,10 @@
 			<view class="buttons button_click" @click="importFile">
 				<text class="buttons_text">载入文件</text>
 			</view>
-			<view class="number_control" :style="{ visibility: showCb ? 'visible'　:　'hidden' }">
-				<view class="buttons button_click" @click="pageUp">
-					<text class="buttons_text">-</text>
-				</view>
-				<text class="target_number">{{ targetNumber }}</text>
-				<view class="buttons button_click" @click="pageDown">
-					<text class="buttons_text">+</text>
-				</view>
-			</view>
 		</view>
 
 		<view class="file_function" :style="{ visibility: showFp ? 'visible'　:　'hidden' }">
-			<view class="preview" v-if="clickToCheck" @click="openFileToPreview(originFile ? fileCache : fileResult)">
+			<view class="preview" v-if="clickToCheck" @click="openFileToPreview(fileResult)">
 				<text class="preview_text">点击查看PDF</text>
 			</view>
 			<view class="preview" v-if="inImport">
@@ -36,10 +27,8 @@
 		</view>
 
 		<view class="file_function">
-			<view class="buttons button_click" :style="{ visibility: showOb ? 'visible'　:　'hidden' }" @click="fileCutting">
-				<text class="buttons_text">截取</text>
-			</view>
-			<view class="buttons button_click" :style="{ visibility: showGb ? 'visible'　:　'hidden' }" @click="shareFileToChat(fileResult)">
+			<view class="buttons button_click" :style="{ visibility: showGb ? 'visible'　:　'hidden' }"
+				@click="shareFileToChat(fileResult)">
 				<text class="buttons_text">导出文件</text>
 			</view>
 		</view>
@@ -59,8 +48,6 @@
 
 	// 控制按钮与预览区是否显示
 	const showFp = ref(false)
-	const showCb = ref(false)
-	const showOb = ref(false)
 	const showGb = ref(false)
 
 	// 控制预览区内容的显示
@@ -68,18 +55,11 @@
 	const inImport = ref(false)
 	const inOperation = ref(false)
 	const inFail = ref(false)
-	
-	// 预览区的文件是否已经过处理
-	const originFile = ref(null)
 
-	// 截取目标页数
-	const targetNumber = ref(0)
-	// 文件总页数
-	const numberLimit = ref(0)
 	// 选择文件后缓存其本地路径
-	const fileCache = ref('')
+	const fileCache = ref([])
 	// 前端文件上传至云储存后获得的文件ID
-	const cloudFileID = ref('')
+	const cloudFileID = ref([])
 	// 处理后的文件的临时本地路径
 	const fileResult = ref('')
 
@@ -97,45 +77,57 @@
 		initialize()
 		// 从聊天记录获取文件
 		wx.chooseMessageFile({
-			count: 1,
+			count: 9,
 			type: 'file',
 			extension: ['.pdf'],
 			// 选择成功
 			success: async (res) => {
-				fileCache.value = res.tempFiles[0].path
+				for (let pdf of res.tempFiles) {
+					fileCache.value.push(pdf.path)
+				}
 				showFp.value = true
 				inImport.value = true
 				// 上传至云端
 				let functionStatus = await uploadToCloud()
-				// 上传成功后呼叫云函数数页
+				// 上传成功后呼叫云函数处理
 				if (functionStatus === "success") {
+					inImport.value = false
+					inOperation.value = true
 					try {
-						const result = await uniCloud.callFunction({
-							name: 'PDFPageCounting',
+						const resultFileID = await uniCloud.callFunction({
+							name: 'PDFMerge',
 							data: {
 								fileID: cloudFileID.value
 							},
-							timeout: 30000
+							timeout: 60000
 						})
-						// 数页成功后设置页数操作限制，否则显示失败画面
-						if (result.result !== 0) {
-							numberLimit.value = result.result
-							targetNumber.value = 1
-							inImport.value = false
-							clickToCheck.value = true
-							originFile.value = true
-							showCb.value = true
-							showOb.value = true
+						if (resultFileID.result.status === "success") {
+							let functionStatus = await downloadFromCloud(resultFileID.result.fileID)
+							// 如果下载完成，则显示结果文件，否则显示失败画面
+							if (functionStatus === "success") {
+								inOperation.value = false
+								clickToCheck.value = true
+								showGb.value = true
+							} else {
+								inOperation.value = false
+								inFail.value = true
+							}
 						} else {
-							throw new Error()
+							uni.showToast({
+								duration: 1500,
+								title: '处理失败',
+								icon: 'error'
+							})
+							inOperation.value = false
+							inFail.value = true
 						}
 					} catch {
 						uni.showToast({
 							duration: 1500,
-							title: '解析失败',
+							title: '处理失败',
 							icon: 'error'
 						})
-						inImport.value = false
+						inOperation.value = false
 						inFail.value = true
 					}
 					// 如果云上传失败，显示失败画面
@@ -155,116 +147,41 @@
 				})
 				// 载入操作结束
 				whenImport = false
-				// 权限提示
 			}
 		})
 	}
-	
-	let whenCutting = false
-	async function fileCutting() {
-		if (whenCutting) {
-			uni.showToast({
-				duration: 1000,
-				title: '截取操作中',
-				icon: 'error'
-			})
-			return
-		}
-		whenCutting = true
-		clickToCheck.value = false
-		inFail.value = false
-		inOperation.value = true
-		// 呼叫云函数处理
-		let resultFileID
-		try {
-			resultFileID = await uniCloud.callFunction({
-				name: 'PDFCutting',
-				data: {
-					fileID: cloudFileID.value,
-					targetNumber: targetNumber.value
-				},
-				timeout: 30000
-			})
-			// 如果云函数处理成功，则开始下载
-			if (resultFileID.result.status === "success") {
-				let functionStatus = await downloadFromCloud(resultFileID.result.fileID)
-				// 如果下载完成，则显示结果文件，否则显示失败画面
-				if (functionStatus === "success") {
-					inOperation.value = false
-					clickToCheck.value = true
-					originFile.value = false
-					showGb.value = true
-				} else {
-					inOperation.value = false
-					inFail.value = true
-				}
-			} else {
-				uni.showToast({
-					duration: 1500,
-					title: '处理失败',
-					icon: 'error'
-				})
-				inOperation.value = false
-				inFail.value = true
-			}
-		} catch {
-			uni.showToast({
-				duration: 1500,
-				title: '处理失败',
-				icon: 'error'
-			})
-			inOperation.value = false
-			inFail.value = true
-		}
-		// 载入操作结束
-		whenCutting = false
-	}
-
-	function pageUp() {
-		if (targetNumber.value > 1) {
-			targetNumber.value -= 1
-		}
-	}
-
-	function pageDown() {
-		if (targetNumber.value < numberLimit.value) {
-			targetNumber.value += 1
-		}
-	}
 
 	function initialize() {
-		fileCache.value = ''
-		cloudFileID.value = ''
+		fileCache.value = []
+		cloudFileID.value = []
 		fileResult.value = ''
-		targetNumber.value = 0
 		showFp.value = false
-		showCb.value = false
-		showOb.value = false
 		showGb.value = false
 		clickToCheck.value = false
 		inImport.value = false
 		inOperation.value = false
 		inFail.value = false
-		originFile.value = null
 	}
 
-	// 上传函数。已执行把上传内容设为cloudFileID
+	// 上传函数。已执行把上传内容推入cloudFileID数组
 	async function uploadToCloud() {
 		try {
-			if (fileCache.value === '') throw new Error()
-			const result = await uniCloud.uploadFile({
-				filePath: fileCache.value,
-				cloudPath: `temp/${Date.now()}_${Math.random().toString(36).substr(2,6)}`
-			})
-			cloudFileID.value = result.fileID
-			return 'success'
+			if (fileCache.value.length === 0) throw new Error()
+			for (let file of fileCache.value) {
+				const result = await uniCloud.uploadFile({
+					filePath: file,
+					cloudPath: `temp/${Date.now()}_${Math.random().toString(36).substr(2,6)}`
+				})
+				cloudFileID.value.push(result.fileID)
+			}
+			return "success"
 		} catch {
 			uni.showToast({
 				duration: 1500,
 				title: '上传失败',
 				icon: 'error'
 			})
-			return 'fail'
+			return "fail"
 		}
 	}
 
@@ -344,21 +261,6 @@
 		font-size: 30rpx;
 		font-weight: bold;
 		color: #86633b;
-	}
-
-	.number_control {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 10rpx;
-		flex: 1;
-	}
-
-	.target_number {
-		user-select: none;
-		font-size: 40rpx;
-		font-weight: bold;
-		color: #d14415;
 	}
 
 	.preview {

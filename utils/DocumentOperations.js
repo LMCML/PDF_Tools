@@ -1,7 +1,14 @@
 export function picturesPreview(filePath, index) {
 	uni.previewImage({
 		urls: Array.isArray(filePath) ? filePath : [filePath],
-		current: index
+		current: index,
+		fail: (err) => {
+			uni.showToast({
+				duration: 1500,
+				title: '无法打开',
+				icon: 'error'
+			})
+		}
 	})
 }
 
@@ -38,18 +45,21 @@ export async function downloadToLocal(filePath) {
 	try {
 		for (let file of Array.isArray(filePath) ? filePath : [filePath]) {
 			try {
-				console.log(file)
 				await uni.saveImageToPhotosAlbum({
 					filePath: file
 				})
-			} catch (err) {
+			} catch {
 				uni.showToast({
 					duration: 750,
 					title: '保存失败',
-					icon: 'error'
+					icon: 'none'
 				})
 				if (err.errMsg.includes('auth deny')) {
 					throw err
+					// } else {
+					// 	uni.previewImage({
+					// 		urls: Array.isArray(filePath) ? filePath : [filePath]
+					// 	})
 				}
 			}
 		}
